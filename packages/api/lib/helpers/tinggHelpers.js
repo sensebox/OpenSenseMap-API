@@ -74,7 +74,7 @@ const createThing = function createThing(data){
 */
 
 const createThingType = function createThingType(data){
-    return fetch(app.TINGG_URL+'/thing-types'{
+    return fetch(app.TINGG_URL+'/thing-types',{
         method:'POST',
         body:JSON.stringify(data),
         headers:{"Authorization":"Bearer "+token}
@@ -89,7 +89,7 @@ const createThingType = function createThingType(data){
     output:200/400 status code 
 */
 const linkModem = function linkModem(data){
-    return fetch(app.TINGG_URL+'/modems/'+data.imsi+'/link'{
+    return fetch(app.TINGG_URL+'/modems/'+data.imsi+'/link',{
         method:'POST',
         body:data.thing_id,
         headers:{"Authorization":"Bearer "+token}

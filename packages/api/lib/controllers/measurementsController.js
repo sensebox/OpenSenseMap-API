@@ -357,6 +357,38 @@ const postNewMeasurements = async function postNewMeasurements (req, res, next) 
 };
 
 
+const postNewMeasurementTingg = async function postNewMeasurementTingg(req,res,next){
+  // look up req.body to and look for box ... 
+  // data will look like 
+  /*{
+    "topic": "/osm/box-id-1/sensor-id-1",
+    "payload": "10"
+  }
+  */
+ // TODO: Mobile boxes and location
+ // const { boxId } = req._userParams;
+  const { createdAt, location } = req._userParams;
+  const {topic,payload} = req._userParams;
+  const boxId = topic.split('/')[2]
+  const sensorId = topic.split('/')[3]
+  try {
+    const box = await Box.findBoxById(boxId, { populate: false, lean: false });
+    if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
+      throw new UnauthorizedError('Box access token not valid!');
+    }
+    const [measurement] = await Measurement.decodeMeasurements([{
+      sensor_id: sensorId,
+      value:payload,
+      createdAt,
+      location
+    }]);
+    await box.saveMeasurement(measurement);
+    res.send(201, 'Measurement saved in box');
+  } catch (err) {
+    handleError(err, next);
+  }
+}
+
 module.exports = {
   postNewMeasurement: [
     checkContentType,
@@ -414,5 +446,12 @@ module.exports = {
       { name: 'onlyValue', required: false }
     ]),
     getLatestMeasurements
-  ]
-};
+  ],
+  postNewMeasurementTingg: [
+    checkContentType,
+    retrieveParameters([
+      { name: 'topic', required: true },
+      { name: 'payload', required: true },
+    ]),
+    postNewMeasurementTingg
+  ]};
