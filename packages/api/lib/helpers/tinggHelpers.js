@@ -1,11 +1,21 @@
 'use strict';
+const fetch = require('node-fetch')
+const {app} = {
+    TINGG_URL: ''
+}
 /**
  * logs into tingg developer account
  * @param {"email":"email","password":"password"} data 
  */
 
 const login = function login(data){
-
+    return fetch('https://api.stage01a.tingg.io/v1/auth/login',{
+        method:'POST',
+        body:JSON.stringify(data),
+        headers:{"Content-Type":"application/json"}
+    })
+    .then(res => res.json())
+    .catch(err=>consolele.error(err))
 }
 /**
  * gets new token based on old one

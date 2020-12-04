@@ -35,7 +35,8 @@
     "restify-errors": "^8.0.2",
     "simple-statistics": "^7.3.2",
     "stringify-stream": "^1.0.5",
-    "uuid": "^7.0.3"
+    "uuid": "^7.0.3",
+    "node-fetch":"^2.6.1"
   },
   "private": true
 }
