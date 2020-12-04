@@ -1,7 +1,7 @@
 'use strict';
 const fetch = require('node-fetch')
-const {app} = {
-    TINGG_URL: ''
+const app = {
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
 }
 /**
  * logs into tingg developer account
@@ -9,20 +9,24 @@ const {app} = {
  */
 
 const login = function login(data){
-    return fetch('https://api.stage01a.tingg.io/v1/auth/login',{
+    return fetch(app.TINGG_URL+'auth/login',{
         method:'POST',
         body:JSON.stringify(data),
         headers:{"Content-Type":"application/json"}
     })
     .then(res => res.json())
-    .catch(err=>consolele.error(err))
+    .catch(err=>console.error(err))
 }
 /**
  * gets new token based on old one
  * @param {"token":token} data 
  */
 const refreshToken = function refreshToken(data){
-
+    return fetch(app.TINGG_URL+'auth/token-refresh',{
+        method:'POST',
+        headers:{"Authorization":"Bearer "+data.token}
+    })
+    .then(res=>res.json())
 }
 
 /**  calls   GET https://api.tingg.io/v1/modems/:imsi/verify?code=:code to verify imsi and secret code
@@ -33,7 +37,12 @@ const refreshToken = function refreshToken(data){
  * @param {*} data {"imsi":imsi,"secret_code":secret_code}
  */
 const verifyModem = function verifyModem(data){
-
+    return fetch(app.TINGG_URL+'/modems'+data.imsi+'verify?code='+data.secret_code,{
+        method:'GET',
+        headers:{"Authorization":"Bearer " + token}
+    })
+    .then(res=>res.json())
+    .catch(err=>console.error(err))
 }
 /*
     calls POST https://api.tingg.io/v1/things to create a thing
@@ -48,7 +57,13 @@ const verifyModem = function verifyModem(data){
 */
 
 const createThing = function createThing(data){
-
+    return fetch(app.TINGG_URL+'/things',{
+        method:'POST',
+        body:JSON.stringify(data),
+        headers:{"Authorization":"Bearer "+token}
+    })
+    .then(res=>res.json())
+    .catch(err=>console.error(err))
 }
 
 /*
@@ -59,7 +74,13 @@ const createThing = function createThing(data){
 */
 
 const createThingType = function createThingType(data){
-
+    return fetch(app.TINGG_URL+'/thing-types'{
+        method:'POST',
+        body:JSON.stringify(data),
+        headers:{"Authorization":"Bearer "+token}
+    })
+    .then(res=>res.json())
+    .catch(err=>console.error(err))
 }
 
 /*
@@ -68,7 +89,12 @@ const createThingType = function createThingType(data){
     output:200/400 status code 
 */
 const linkModem = function linkModem(data){
-
+    return fetch(app.TINGG_URL+'/modems/'+data.imsi+'/link'{
+        method:'POST',
+        body:data.thing_id,
+        headers:{"Authorization":"Bearer "+token}
+    })
+    .then(res=>res.json())
 }
 
 
