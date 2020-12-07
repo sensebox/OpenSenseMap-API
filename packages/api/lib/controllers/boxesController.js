@@ -39,7 +39,7 @@
 const
   { Box } = require('@sensebox/opensensemap-api-models'),
   { addCache, clearCache, checkContentType, redactEmail, postToSlack } = require('../helpers/apiUtils'),
-  {login, refreshToken,verifyModem,createThing,createThingType,linkModem} = require('../helpers/tinggHelpers'),
+  { initTingg } = require('../helpers/tinggHelpers'),
   { point } = require('@turf/helpers'),
   classifyTransformer = require('../transformers/classifyTransformer'),
   {
@@ -398,6 +398,9 @@ const postNewBox = async function postNewBox (req, res, next) {
   try {
     let newBox = await req.user.addBox(req._userParams);
     newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
+    if(req._userParams.tingg){
+      initTingg(newBox);
+    }
     res.send(201, { message: 'Box successfully created', data: newBox });
     clearCache(['getBoxes', 'getStats']);
     postToSlack(`New Box: ${req.user.name} (${redactEmail(req.user.email)}) just registered "${newBox.name}" (${newBox.model}): <https://opensensemap.org/explore/${newBox._id}|link>`);
@@ -439,8 +442,8 @@ const postNewBox = async function postNewBox (req, res, next) {
 const postNewTinggBox = async function postNewTinggBox (req, res, next) {
   try {
     //let newBox = await req.user.addBox(req._userParams);
-    console.log("login");
-    let logininfo = await login({"email":"e_thie10@uni-muenster.de","password":"senseboxRocks"})
+
+    let logininfo = await loginTingg({"email":"e_thie10@uni-muenster.de","password":"senseboxRocks"})
     
     // newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
     // res.send(201, { message: 'Box successfully created', data: newBox });
@@ -594,6 +597,7 @@ module.exports = {
       { name: 'windSpeedPort', dataType: 'String', defaultValue: 'C', allowedValues: ['A', 'B', 'C'] },
       { name: 'mqtt', dataType: 'object' },
       { name: 'ttn', dataType: 'object' },
+      { name: 'tingg',dataType:'object'},
       { name: 'useAuth', allowedValues: ['true', 'false'] },
       { predef: 'location', required: true }
     ]),
