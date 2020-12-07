@@ -1,8 +1,11 @@
 'use strict';
 const fetch = require('node-fetch')
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
+    email:"e_thie10@uni-muenster.de",
+    password:"senseboxRocks"
 }
+let access_token;
 /**
  * logs into tingg developer account
  * @param {"email":"email","password":"password"} data 
@@ -15,18 +18,20 @@ const login = function login(data){
         headers:{"Content-Type":"application/json"}
     })
     .then(res => res.json())
+    .then(json=>{access_token = json.token})
     .catch(err=>console.error(err))
 }
 /**
  * gets new token based on old one
- * @param {"token":token} data 
+ * @param token: String
  */
-const refreshToken = function refreshToken(data){
+const refreshToken = function refreshToken(token){
     return fetch(app.TINGG_URL+'auth/token-refresh',{
         method:'POST',
-        headers:{"Authorization":"Bearer "+data.token}
+        headers:{"Authorization":"Bearer "+access_token}
     })
     .then(res=>res.json())
+    .catch(err=>console.error(err));
 }
 
 /**  calls   GET https://api.tingg.io/v1/modems/:imsi/verify?code=:code to verify imsi and secret code
@@ -39,10 +44,10 @@ const refreshToken = function refreshToken(data){
 const verifyModem = function verifyModem(data){
     return fetch(app.TINGG_URL+'/modems'+data.imsi+'verify?code='+data.secret_code,{
         method:'GET',
-        headers:{"Authorization":"Bearer " + token}
+        headers:{"Authorization":"Bearer " + access_token}
     })
     .then(res=>res.json())
-    .catch(err=>console.error(err))
+    .catch(err=>handleError(err,verifyModem,data))
 }
 /*
     calls POST https://api.tingg.io/v1/things to create a thing
@@ -60,10 +65,10 @@ const createThing = function createThing(data){
     return fetch(app.TINGG_URL+'/things',{
         method:'POST',
         body:JSON.stringify(data),
-        headers:{"Authorization":"Bearer "+token}
+        headers:{"Authorization":"Bearer "+access_token}
     })
     .then(res=>res.json())
-    .catch(err=>console.error(err))
+    .catch(err=>handleError(err,createThing,data))
 }
 
 /*
@@ -77,10 +82,10 @@ const createThingType = function createThingType(data){
     return fetch(app.TINGG_URL+'/thing-types',{
         method:'POST',
         body:JSON.stringify(data),
-        headers:{"Authorization":"Bearer "+token}
+        headers:{"Authorization":"Bearer "+access_token}
     })
     .then(res=>res.json())
-    .catch(err=>console.error(err))
+    .catch(err=>handleError(err,createThingType,data))
 }
 
 /*
@@ -92,9 +97,38 @@ const linkModem = function linkModem(data){
     return fetch(app.TINGG_URL+'/modems/'+data.imsi+'/link',{
         method:'POST',
         body:data.thing_id,
-        headers:{"Authorization":"Bearer "+token}
+        headers:{"Authorization":"Bearer "+access_token}
     })
     .then(res=>res.json())
+    .catch(err=>handleError(err,linkModem,data))
+
+}
+
+/**
+ * 
+ */
+const handleError = function handleError(err,func,data){
+    /*
+        pulls new access token if old one is not accepted anymore
+        TODO: pulls infinitely till new access token is returned => server error ? 
+    */
+    if(err.name === 'Unauthorized'){
+        console.log("authorization failed at tingg; requesting new token")
+        refreshToken(access_token)
+        .then(res=>res.json())
+        .then(json => access_token = json.token)
+        .then(()=>
+        {   
+            console.log("retrying function")
+           func(data)
+        })
+    }
+    if(err.name=== 'internal server error'){
+        console.log("internal server error at tingg")
+        return err;
+    }
+
+    return err;
 }
 
 
@@ -104,5 +138,6 @@ module.exports = {
     verifyModem,
     createThingType,
     createThing,
-    linkModem
+    linkModem,
+    access_token
 }
