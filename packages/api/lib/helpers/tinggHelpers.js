@@ -18,25 +18,14 @@ const initTingg = async function newbox(box) {
     if (!access_token) {
        await login({ "email": app.email, "password": app.password })
     }
-    createThingType(box)
-        .then(data=>{
-            console.log("thingtype creation",data);
-            createThing(box.name,data.id)})
-        // .then(data=>linkModem(box.imsi,data.id))
-    
-    // start tingg initialization
-    // createThingType(box)
-    //     .then(data => data.json())
-    //     .then(json => createThing(box.name, json.thingtypeid))
-    //     .then(data => data.json())
-    //     .then(json => json.thing_id)
-    //     .then(response=>response.json())
-    //     .then(json => console.log(json))
-
-    // createThingType(box)
-    //     .then(res => console())
-    //     .then(json => console.log(json))
-    // .then((thing_id) => linkModem(box.imsi, thing_id))
+    try {
+        const thing_type_id = await createThingType(box);
+        const thing_id = await createThing(box.name,thing_type_id);
+        // linkModem(box.tingg.gsm,thing_id)
+    }
+    catch(error){
+        console.error(error)
+    }
 }
 
 
@@ -167,10 +156,10 @@ const buildBody = function buildBody(data) {
     input: imsi and thing_id 
     output:200/400 status code 
 */
-const linkModem = function linkModem(data) {
-    return fetch(app.TINGG_URL + '/modems/' + data.imsi + '/link', {
+const linkModem = function linkModem(imsi,thing_id) {
+    return fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
         method: 'POST',
-        body: data.thing_id,
+        body: thing_id,
         headers: { "Authorization": "Bearer " + access_token }
     })
         .then(res => res.json())
