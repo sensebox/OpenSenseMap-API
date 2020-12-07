@@ -398,7 +398,7 @@ const postNewBox = async function postNewBox (req, res, next) {
   try {
     let newBox = await req.user.addBox(req._userParams);
     newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
-    if(req._userParams.tingg){
+    if(req._userParams.gsm){
       initTingg(newBox);
     }
     res.send(201, { message: 'Box successfully created', data: newBox });
@@ -597,7 +597,7 @@ module.exports = {
       { name: 'windSpeedPort', dataType: 'String', defaultValue: 'C', allowedValues: ['A', 'B', 'C'] },
       { name: 'mqtt', dataType: 'object' },
       { name: 'ttn', dataType: 'object' },
-      { name: 'tingg',dataType:'object'},
+      { name: 'gsm',dataType:'object'},
       { name: 'useAuth', allowedValues: ['true', 'false'] },
       { predef: 'location', required: true }
     ]),

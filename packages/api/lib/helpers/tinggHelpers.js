@@ -2,11 +2,9 @@
 const fetch = require('node-fetch');
 const handleError = require('./errorHandler');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
-    email: "e_thie10@uni-muenster.de",
-    password: "senseboxRocks"
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
 }
-let access_token;
+var access_token = "kdsfslkjdfjks";
 
 /**
  * inits tingg registration process 
@@ -17,7 +15,7 @@ let access_token;
  */
 const initTingg = async function newbox(box) {
     if (!access_token) {
-        await login({ "email": app.email, "password": app.password })
+        access_token = await login({ "email": app.email, "password": app.password })
     }
     try {
         const thing_type_id = await createThingType(box);
@@ -35,19 +33,17 @@ const initTingg = async function newbox(box) {
  * @param {"email":"email","password":"password"} data 
  */
 const login = async function login(data) {
-    console.log("logging in", data);
     let response = await fetch(app.TINGG_URL + 'auth/login', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
     })
-    if(!response.ok){
+    if (!response.ok) {
         throw new Error(`HTTP Error status : ${response.status}`)
     }
-    if(response.status === 200){
-        response = response.json();
-        access_token = response.token
-    }
+    response = await response.json();
+    return response.token;
+
 }
 /**
  * gets new token based on old one
@@ -58,10 +54,14 @@ const refreshToken = async function refreshToken() {
         method: 'POST',
         headers: { "Authorization": "Bearer " + access_token }
     })
-    if(!response.ok){
-        throw new Error(`HTTP Error status : ${response.status}`)
+    if (!response.ok) {
+        if (response.status === 401) {
+            access_token = await login({ "email": app.email, "password": app.password })
+        } else {
+            throw new Error(`HTTP Error status : ${response.status}`)
+        }
     }
-    if(response.status === 200){
+    if (response.status === 200) {
         response = response.json();
         access_token = response.token
     }
@@ -73,32 +73,30 @@ const refreshToken = async function refreshToken() {
     output: thing_type_id
 */
 const createThingType = async function createThingType(data) {
+    const thingtypebody = buildBody(data);
+    console.log("token at function", access_token)
     let response = await fetch(app.TINGG_URL + '/thing-types', {
         method: 'POST',
         body: JSON.stringify(thingtypebody),
         headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
     })
-    const thingtypebody = buildBody(data);
-    if(!response.ok){
-        throw new Error(`HTTP Error status : ${response.status}`)
-    }
-    switch (response.status) {
-        case 401:
+    if (!response.ok) {
+        if (response.status === 401) {
             console.log("Unauthorized");
             access_token = await refreshToken(access_token);
             createThingType(data);
-            break;
-        case 201:
-            console.log("thing type created successfully")
-            return response.json()
-            break;
-        case 400:
+        }
+        if (response.status === 400) {
             console.log("Invalid Input");
             throw new Error('Invalid Input');
-            break;    
-        default:
-            break;
+        }
+        else {
+            throw new Error(`HTTP Error status : ${response.status}`)
+        }
     }
+    response = await response.json();
+    let thing_type_id = response.id;
+    return thing_type_id;
 
 }
 
@@ -121,26 +119,19 @@ const createThing = async function createThing(name, thingid) {
         body: JSON.stringify(body),
         headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
     })
-    if(!response.ok){
-        throw new Error(`HTTP Error status : ${response.status}`)
-    }
-    switch (response.status) {
-        case 401:
+    if (!response.ok) {
+        if (response.status === 401) {
             console.log("Unauthorized");
             access_token = await refreshToken(access_token);
             createThing(name, thingid);
-            break;
-        case 201:
-            console.log("thing type created successfully")
-            return response.json()
-            break;
-        case 400:
+        }
+        if (response.status === 400) {
             console.log("Invalid Input");
             throw new Error('Invalid Input');
-            break;    
-        default:
-            break;
+        }
+
     }
+    return await response.json()
 }
 
 /*
@@ -154,26 +145,18 @@ const linkModem = async function linkModem(imsi, thing_id) {
         body: thing_id,
         headers: { "Authorization": "Bearer " + access_token }
     })
-    if(!response.ok){
-        throw new Error(`HTTP Error status : ${response.status}`)
-    }
-    switch (response.status) {
-        case 401:
+    if (!response.ok) {
+        if (response.status === 401) {
             console.log("Unauthorized");
             access_token = await refreshToken(access_token);
-            linkModem(imsi, thingid);
-            break;
-        case 201:
-            console.log("thing type created successfully")
-            return response.json()
-            break;
-        case 400:
+            linkModem(imsi, thing_id);
+        }
+        if (response.status === 400) {
             console.log("Invalid Input");
             throw new Error('Invalid Input');
-            break;    
-        default:
-            break;
+        }
     }
+    return await response.json();
 }
 
 /**Helper function to build the data accordingly from the sensor array
