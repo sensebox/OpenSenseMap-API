@@ -1,10 +1,10 @@
 'use strict';
 const fetch = require('node-fetch');
-const handleError = require('./errorHandler');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
+
 }
-var access_token = "kdsfslkjdfjks";
+let access_token;
 
 /**
  * inits tingg registration process 
@@ -33,6 +33,7 @@ const initTingg = async function newbox(box) {
  * @param {"email":"email","password":"password"} data 
  */
 const login = async function login(data) {
+    console.log("new loign")
     try {
         let response = await fetch(app.TINGG_URL + 'auth/login', {
             method: 'POST',
@@ -45,7 +46,7 @@ const login = async function login(data) {
         response = await response.json();
         return response.token;
     } catch (error) {
-        handleError(error);
+        console.log(error);
     }
 }
 /**
@@ -56,15 +57,19 @@ const refreshToken = async function refreshToken() {
     try {
         let response = await fetch(app.TINGG_URL + 'auth/token-refresh', {
             method: 'POST',
-            headers: { "Authorization": "Bearer " + access_token }
+            headers: { "Authorization": "Bearer " + access_token ,"Content-Type": "application/json" },
         })
         if (!response.ok) {
-            throw new Error(`HTTP Error status : ${response.status}`)
+            if(response.status === 401){
+                let new_access_token = await login({ "email": app.email, "password": app.password })
+                return new_access_token;
+            }
+            throw new Error(`HTTP Error status at refresh token : ${response.status}`)
         }
-        response = response.json();
+        response = await response.json();
         return response.token;
     } catch (error) {
-        handleError(error)
+        console.log(error);
     }
 
 }
@@ -77,16 +82,16 @@ const refreshToken = async function refreshToken() {
 const createThingType = async function createThingType(data) {
     try {
         const thingtypebody = buildBody(data);
-        console.log("token at function", access_token)
+        const headers =  { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
         let response = await fetch(app.TINGG_URL + '/thing-types', {
             method: 'POST',
             body: JSON.stringify(thingtypebody),
-            headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
+            headers
         })
         if (!response.ok) {
             if (response.status === 401) {
                 console.log("Unauthorized");
-                access_token = await refreshToken(access_token);
+                access_token = await refreshToken();
                 createThingType(data);
             }
             if (response.status === 400) {
@@ -94,7 +99,7 @@ const createThingType = async function createThingType(data) {
                 throw new Error('Invalid Input');
             }
             else {
-                throw new Error(`HTTP Error status : ${response.status}`)
+           throw new Error(`HTTP Error status : ${response.headers}`)
             }
         }
         response = await response.json();
@@ -102,7 +107,7 @@ const createThingType = async function createThingType(data) {
         return thing_type_id;
 
     } catch (error) {
-        handleError(error);
+        console.log(error);
     }
 
 }
@@ -142,7 +147,7 @@ const createThing = async function createThing(name, thingid) {
         response = await response.json();
         return response;
     } catch (error) {
-
+        console.log(error);
     }
 
 }
@@ -173,7 +178,7 @@ const linkModem = async function linkModem(imsi, thing_id) {
         response = await response.json();
         return response;
     } catch (error) {
-        handleError(error);
+        console.log(error);
     }
 
 }
