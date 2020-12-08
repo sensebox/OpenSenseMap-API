@@ -1,7 +1,7 @@
 'use strict';
 const fetch = require('node-fetch');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
 
 }
 let access_token;
@@ -21,6 +21,7 @@ const initTingg = async function newbox(box) {
         const thing_type_id = await createThingType(box);
         const thing_id = await createThing(box.name, thing_type_id);
         // linkModem(box.tingg.gsm,thing_id)
+        return true;
     }
     catch (error) {
         console.error(error)

@@ -399,9 +399,13 @@ const postNewBox = async function postNewBox (req, res, next) {
     let newBox = await req.user.addBox(req._userParams);
     newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
     if(req._userParams.gsm){
-      initTingg(newBox);
+      if(initTingg(newBox)){
+        res.send(201,{message:'Box successfully created and GSM configuration complete',data:newBox})
+      }
     }
-    res.send(201, { message: 'Box successfully created', data: newBox });
+    else {
+      res.send(201, { message: 'Box successfully created', data: newBox });
+    }
     clearCache(['getBoxes', 'getStats']);
     postToSlack(`New Box: ${req.user.name} (${redactEmail(req.user.email)}) just registered "${newBox.name}" (${newBox.model}): <https://opensensemap.org/explore/${newBox._id}|link>`);
   } catch (err) {
