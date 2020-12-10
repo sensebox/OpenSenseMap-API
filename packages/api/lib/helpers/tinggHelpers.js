@@ -195,7 +195,7 @@ const buildBody = function buildBody(data) {
             let toAdd = {
                 "topic": `/osm/${data._id}/${sensor._id}`,
                 "method": "pub",
-                "type": "number"
+                "type": "object"
             }
             resources.push(toAdd);
         })
