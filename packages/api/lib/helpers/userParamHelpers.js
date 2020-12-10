@@ -524,10 +524,26 @@ const checkPrivilege = function checkPrivilege (req, res, next) {
   return next(new ForbiddenError('Not signed in or not authorized to access.'));
 };
 
+
+
+const decodeTinggMessage = function decodeTinggMessage(topic,payload){
+  // comes in like "/osm/:boxid/:sensorid" 
+  // should return boxid and sensorid as well as payload inf
+  const topicArray = topic.split("/");
+  const boxId = topicArray[2];
+  const sensorId = topicArray[3];
+  const value = payload.value;
+  const createdAt = payload.createdAt;
+  const location = payload.location;
+  return {boxId, sensorId, value, createdAt, location}
+}
+
+
 module.exports = {
   validateFromToTimeParams,
   retrieveParameters,
   initUserParams,
   parseAndValidateTimeParamsForFindAllBoxes,
-  checkPrivilege
+  checkPrivilege,
+  decodeTinggMessage
 };

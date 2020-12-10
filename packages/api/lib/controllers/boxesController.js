@@ -414,51 +414,6 @@ const postNewBox = async function postNewBox (req, res, next) {
 };
 
 /**
- * @api {post} /boxes Post new senseBox
- * @apiGroup Boxes
- * @apiName postNewTinggBox
- * @apiDescription Create a new senseBox. This method allows you to submit a new senseBox.
- *
- * ### MQTT Message formats
- * If you specify `mqtt` parameters, the openSenseMap API will try to connect to the MQTT broker
- * specified by you. The parameter `messageFormat` tells the API in which format you are sending
- * measurements in. The accepted formats are listed under `Measurements/Post mutliple new Measurements`
- *
- * @apiParam (RequestBody) {String} name the name of this senseBox.
- * @apiParam (RequestBody) {String} [grouptag] the grouptag of this senseBox.
- * @apiParam (RequestBody) {String="indoor","outdoor","mobile","unknown"} exposure the exposure of this senseBox.
- * @apiParam (RequestBody) {Location} location the coordinates of this senseBox.
- * @apiParam (RequestBody) {String="homeV2Lora","homeV2Ethernet","homeV2Wifi","homeEthernet","homeWifi","homeEthernetFeinstaub","homeWifiFeinstaub","luftdaten_sds011","luftdaten_sds011_dht11","luftdaten_sds011_dht22","luftdaten_sds011_bmp180","luftdaten_sds011_bme280","hackair_home_v2"} [model] specify the model if you want to use a predefined senseBox model, autocreating sensor definitions.
- * @apiParam (RequestBody) {Sensor[]} [sensors] an array containing the sensors of this senseBox. Only use if `model` is unspecified.
- * @apiParam (RequestBody) {String="hdc1080","bmp280","tsl45315","veml6070","sds011","bme680","smt50","soundlevelmeter", "windspeed", "scd30"} [sensorTemplates] Specify which sensors should be included.
- * @apiParam (RequestBody) {Object} [mqtt] specify parameters of the MQTT integration for external measurement upload. Please see below for the accepted parameters
- * @apiParam (RequestBody) {Object} [ttn] specify parameters for the TTN integration for measurement from TheThingsNetwork.org upload. Please see below for the accepted parameters
- * @apiParam (RequestBody) {Boolean="true","false"} [useAuth] whether to use access_token or not for authentication
- *
- * @apiUse LocationBody
- * @apiUse SensorBody
- * @apiUse MqttBody
- * @apiUse TTNBody
- * @apiUse ContentTypeJSON
- * @apiUse JWTokenAuth
- */
-
-const postNewTinggBox = async function postNewTinggBox (req, res, next) {
-  try {
-    //let newBox = await req.user.addBox(req._userParams);
-
-    let logininfo = await loginTingg({"email":"e_thie10@uni-muenster.de","password":"senseboxRocks"})
-    
-    // newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
-    // res.send(201, { message: 'Box successfully created', data: newBox });
-    res.send(201,{message:'Successful login',data:logininfo})
-    clearCache(['getBoxes', 'getStats']);
-  } catch (err) {
-    handleError(err, next);
-  }
-};
-
-/**
  * @api {get} /boxes/:senseBoxId/script Download the Arduino script for your senseBox
  * @apiName getSketch
  * @apiGroup Boxes

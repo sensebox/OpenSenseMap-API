@@ -6,7 +6,8 @@ const
   { checkContentType, createDownloadFilename, csvStringifier } = require('../helpers/apiUtils'),
   {
     retrieveParameters,
-    validateFromToTimeParams
+    validateFromToTimeParams,
+    decodeTinggMessage
   } = require('../helpers/userParamHelpers'),
   handleError = require('../helpers/errorHandler'),
   OutlierTransformer = require('../transformers/outlierTransformer'),
@@ -223,7 +224,7 @@ const getDataMulti = async function getDataMulti (req, res, next) {
  */
 const postNewMeasurement = async function postNewMeasurement (req, res, next) {
   const { boxId, sensorId, value, createdAt, location } = req._userParams;
-
+  console.log(location,createdAt)
   try {
     const box = await Box.findBoxById(boxId, { populate: false, lean: false });
     if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
@@ -356,38 +357,39 @@ const postNewMeasurements = async function postNewMeasurements (req, res, next) 
   }
 };
 
-
-const postNewMeasurementTingg = async function postNewMeasurementTingg(req,res,next){
-  // look up req.body to and look for box ... 
-  // data will look like 
-  /*{
-    "topic": "/osm/box-id-1/sensor-id-1",
-    "payload": "10"
-  }
-  */
- // TODO: Mobile boxes and location
- // const { boxId } = req._userParams;
-  const { createdAt, location } = req._userParams;
-  const {topic,payload} = req._userParams;
-  const boxId = topic.split('/')[2]
-  const sensorId = topic.split('/')[3]
+/**
+ * @api {post} /boxes/tinggMeasurement Post new measurement
+ * @apiDescription Route for redirection from tingg.
+ * @apiGroup Measurements
+ * @apiName postNewMeasurementTingg
+ * @apiUse LocationBody
+ * @apiUse ContentTypeJSON
+ * @apiParam (RequestBody) {String} topic The topic of the message, "/osm/:boxid/:sensorid"
+ * @apiParam (RequestBody) {String} payload payload of the value, contains either a string with the value, or the object for mobile measurements 
+ * @apiHeader {String} access_token Box' unique access_token. Will be used as authorization token if box has auth enabled (e.g. useAuth: true)
+ */
+const postNewMeasurementTingg = async function postNewMeasurementTingg (req, res, next) {
+  const { topic,payload } = req._userParams;
+  const { boxId, sensorId, value, createdAt, location } = decodeTinggMessage(topic,payload);
   try {
     const box = await Box.findBoxById(boxId, { populate: false, lean: false });
     if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
       throw new UnauthorizedError('Box access token not valid!');
     }
+
     const [measurement] = await Measurement.decodeMeasurements([{
       sensor_id: sensorId,
-      value:payload,
+      value,
       createdAt,
       location
     }]);
     await box.saveMeasurement(measurement);
-    res.send(201, 'Measurement saved in box');
+    res.send(201, 'Tingg Measurement saved in box');
   } catch (err) {
     handleError(err, next);
   }
-}
+};
+
 
 module.exports = {
   postNewMeasurement: [
@@ -451,7 +453,7 @@ module.exports = {
     checkContentType,
     retrieveParameters([
       { name: 'topic', required: true },
-      { name: 'payload', required: true },
+      { name: 'payload',dataType: 'object' , required: true },
     ]),
     postNewMeasurementTingg
   ]};
