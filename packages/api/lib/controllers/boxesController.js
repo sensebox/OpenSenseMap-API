@@ -607,26 +607,6 @@ module.exports = {
     ]),
     postNewBox
   ],
-  postNewTinggBox: [
-    checkContentType,
-    // retrieveParameters([
-    //   { name: 'name', required: true },
-    //   { name: 'grouptag', aliases: ['tag'] },
-    //   { name: 'exposure', allowedValues: Box.BOX_VALID_EXPOSURES },
-    //   { name: 'model', allowedValues: Box.BOX_VALID_MODELS },
-    //   { name: 'sensors', dataType: ['object'] },
-    //   { name: 'sensorTemplates', dataType: ['String'], allowedValues: ['hdc1080', 'bmp280', 'sds 011', 'tsl45315', 'veml6070', 'bme680', 'smt50', 'soundlevelmeter', 'windspeed', 'scd30'] },
-    //   { name: 'serialPort', dataType: 'String', defaultValue: 'Serial1', allowedValues: ['Serial1', 'Serial2'] },
-    //   { name: 'soilDigitalPort', dataType: 'String', defaultValue: 'A', allowedValues: ['A', 'B', 'C'] },
-    //   { name: 'soundMeterPort', dataType: 'String', defaultValue: 'B', allowedValues: ['A', 'B', 'C'] },
-    //   { name: 'windSpeedPort', dataType: 'String', defaultValue: 'C', allowedValues: ['A', 'B', 'C'] },
-    //   { name: 'mqtt', dataType: 'object' },
-    //   { name: 'ttn', dataType: 'object' },
-    //   { name: 'useAuth', allowedValues: ['true', 'false'] },
-    //   { predef: 'location', required: true }
-    // ]),
-    postNewTinggBox
-  ],
   getBox: [
     retrieveParameters([
       { predef: 'boxId', required: true },
