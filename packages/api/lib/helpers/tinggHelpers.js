@@ -183,6 +183,60 @@ const linkModem = async function linkModem(imsi, thing_id) {
     }
 
 }
+// needs new sensors array 
+const updateThingType = async function updateThingType(data){
+    try {
+        const thingtypebody = buildBody(data)
+        let response = await fetch(app.TINGG_URL+'/thing-types/'+imsi,{
+            method:'PATCH',
+            body:JSON.stringify(thingtypebody),
+            headers:{"Authorization":"Bearer "+access_token}
+        })
+        if(!response.ok){
+            if (response.status === 401) {
+                console.log("Unauthorized");
+                access_token = await refreshToken(access_token);
+                updateThingType(data);
+            }
+            if (response.status === 400) {
+                console.log("Invalid Input");
+                throw new Error('Invalid Input');
+            }
+        }
+        response = await response.json();
+        return response;
+    } catch (error) {
+        
+    }
+}
+
+// needs imsi 
+const unlinkModem = async function unlinkModem(imsi){
+    try {
+        let response = await fetch(app.TINGG_URL+'/modems/'+imsi+'/link',{
+            method:'DELETE',
+            headers:{"Authorization":"Bearer "+access_token}
+            })
+            if(!response.ok){
+                if (response.status === 401) {
+                    console.log("Unauthorized");
+                    access_token = await refreshToken(access_token);
+                    unlinkModem(imsi);
+                }
+                if (response.status === 400) {
+                    console.log("Invalid Input");
+                    throw new Error('Invalid Input');
+                }
+            }
+            response = await response.json();
+            return response
+        }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
 
 /**Helper function to build the data accordingly from the sensor array
  *  needs name and box id

@@ -384,7 +384,7 @@ const postNewMeasurementTingg = async function postNewMeasurementTingg (req, res
       location
     }]);
     await box.saveMeasurement(measurement);
-    res.send(201, 'Tingg Measurement saved in box');
+    res.send(201, 'Measurement saved in box');
   } catch (err) {
     handleError(err, next);
   }
