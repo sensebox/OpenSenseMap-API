@@ -39,7 +39,7 @@
 const
   { Box } = require('@sensebox/opensensemap-api-models'),
   { addCache, clearCache, checkContentType, redactEmail, postToSlack } = require('../helpers/apiUtils'),
-  { initTingg } = require('../helpers/tinggHelpers'),
+  { initTingg,updateThingType,unlinkModem } = require('../helpers/tinggHelpers'),
   { point } = require('@turf/helpers'),
   classifyTransformer = require('../transformers/classifyTransformer'),
   {
@@ -136,6 +136,11 @@ const updateBox = async function updateBox (req, res, next) {
   try {
     let box = await Box.findBoxById(req._userParams.boxId, { lean: false, populate: false });
     box = await box.updateBox(req._userParams);
+    console.log("Box at updateBox :",box)
+    if (box.integrations.gsm){
+      console.log("tingg enabled changing box at tingg as well");
+      await updateThingType(box);
+    }
     if (box._sensorsChanged === true) {
       req.user.mail('newSketch', box);
     }
@@ -397,15 +402,12 @@ const getBox = async function getBox (req, res, next) {
 const postNewBox = async function postNewBox (req, res, next) {
   try {
     let newBox = await req.user.addBox(req._userParams);
+    if(newBox.integrations.gsm){
+      const {thing_id,thing_type_id} = await initTingg(newBox);
+      newBox.integrations.gsm = {...newBox.integrations.gsm,thing_id,thing_type_id};
+    } 
     newBox = await Box.populate(newBox, Box.BOX_SUB_PROPS_FOR_POPULATION);
-    if(req._userParams.gsm){
-      if(initTingg(newBox)){
-        res.send(201,{message:'Box successfully created and GSM configuration complete',data:newBox})
-      }
-    }
-    else {
-      res.send(201, { message: 'Box successfully created', data: newBox });
-    }
+    res.send(201, { message: 'Box successfully created', data: newBox });
     clearCache(['getBoxes', 'getStats']);
     postToSlack(`New Box: ${req.user.name} (${redactEmail(req.user.email)}) just registered "${newBox.name}" (${newBox.model}): <https://opensensemap.org/explore/${newBox._id}|link>`);
   } catch (err) {

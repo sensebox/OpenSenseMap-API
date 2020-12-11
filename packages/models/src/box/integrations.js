@@ -7,7 +7,7 @@ const { mongoose } = require('../db'),
 
 const mqttSchema = new mongoose.Schema({
   enabled: { type: Boolean, default: false, required: true },
-  url: { type: String, trim: true, validate: [function validMqttUri (url) { return url === '' || url.startsWith('mqtt://') || url.startsWith('ws://'); }, '{PATH} must be either empty or start with mqtt:// or ws://'] },
+  url: { type: String, trim: true, validate: [function validMqttUri(url) { return url === '' || url.startsWith('mqtt://') || url.startsWith('ws://'); }, '{PATH} must be either empty or start with mqtt:// or ws://'] },
   topic: { type: String, trim: true },
   messageFormat: { type: String, trim: true, enum: ['json', 'csv', 'application/json', 'text/csv', 'debug_plain', ''] },
   decodeOptions: { type: String, trim: true, validate: isJSONParseableValidation },
@@ -23,14 +23,17 @@ const ttnSchema = new mongoose.Schema({
 }, { _id: false, usePushEach: true });
 
 const gsmSchema = new mongoose.Schema({
-  imsi: { type:String,trim:true,required:true},
-  secret_code:{ type:String,trim:true,required:true}},  {_id:false,usePushEach:true});
+  imsi: { type: String, trim: true, required: true },
+  secret_code: { type: String, trim: true, required: true },
+  thing_id: { type: String, trim: true },
+  thing_type_id: { type: String, trim: true }
+}, { _id: false, usePushEach: true });
 
 const integrationSchema = new mongoose.Schema({
   mqtt: {
     type: mqttSchema,
     required: false,
-    validate: [function validMqttConfig (mqtt) {
+    validate: [function validMqttConfig(mqtt) {
       if (mqtt.enabled === true) {
         if (!utils.isNonEmptyString(mqtt.url)) {
           return false;
@@ -52,7 +55,7 @@ const integrationSchema = new mongoose.Schema({
     required: false,
     validate: [{
       /* eslint-disable func-name-matching */
-      validator: function validTTNDecodeOptions (ttn) {
+      validator: function validTTNDecodeOptions(ttn) {
         /* eslint-enable func-name-matching */
         if (['debug', 'lora-serialization', 'cayenne-lpp'].indexOf(ttn.profile) !== -1) {
           return (ttn.decodeOptions && ttn.decodeOptions.constructor === Array);
@@ -62,18 +65,18 @@ const integrationSchema = new mongoose.Schema({
     }]
   },
 
-  gsm : {
-    type:gsmSchema,
-    required:false,
-    validate: function validGSM(gsm){
+  gsm: {
+    type: gsmSchema,
+    required: false,
+    validate: function validGSM(gsm) {
       // is string, other requirements have to be determined like length, structure etc.
       return true;
-    },msg:"Wrong "
+    }, msg: "Wrong "
   }
 }, { _id: false, usePushEach: true });
 
 
-const addIntegrationsToSchema = function addIntegrationsToSchema (schema) {
+const addIntegrationsToSchema = function addIntegrationsToSchema(schema) {
   schema.add({ integrations: { type: integrationSchema } });
 
   mqttClient.addToSchema(schema);

@@ -1,7 +1,9 @@
 'use strict';
 const fetch = require('node-fetch');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/'
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
+    email:'e_thie10@uni-muenster.de',
+    password:'senseboxRocks'
 
 }
 let access_token;
@@ -21,7 +23,7 @@ const initTingg = async function newbox(box) {
         const thing_type_id = await createThingType(box);
         const thing_id = await createThing(box.name, thing_type_id);
         // linkModem(box.tingg.gsm,thing_id)
-        return true;
+        return {thing_id,thing_type_id};
     }
     catch (error) {
         console.error(error)
@@ -146,6 +148,7 @@ const createThing = async function createThing(name, thingid) {
 
         }
         response = await response.json();
+        response = response.id;
         return response;
     } catch (error) {
         console.log(error);
@@ -187,10 +190,10 @@ const linkModem = async function linkModem(imsi, thing_id) {
 const updateThingType = async function updateThingType(data){
     try {
         const thingtypebody = buildBody(data)
-        let response = await fetch(app.TINGG_URL+'/thing-types/'+imsi,{
+        let response = await fetch(app.TINGG_URL+'/thing-types/'+data.integrations.gsm.imsi,{
             method:'PATCH',
             body:JSON.stringify(thingtypebody),
-            headers:{"Authorization":"Bearer "+access_token}
+            headers:{"Authorization":"Bearer "+access_token,"Content-Type": "application/json"}
         })
         if(!response.ok){
             if (response.status === 401) {
@@ -206,9 +209,11 @@ const updateThingType = async function updateThingType(data){
         response = await response.json();
         return response;
     } catch (error) {
-        
+        console.log(error);
     }
 }
+
+  
 
 // needs imsi 
 const unlinkModem = async function unlinkModem(imsi){
@@ -240,7 +245,7 @@ const unlinkModem = async function unlinkModem(imsi){
 
 /**Helper function to build the data accordingly from the sensor array
  *  needs name and box id
- * @param {sensor array from registration} data 
+ * @param {data} box  
  */
 const buildBody = function buildBody(data) {
     let resources = []
@@ -270,5 +275,7 @@ module.exports = {
     createThing,
     linkModem,
     access_token,
-    initTingg
+    initTingg,
+    updateThingType,
+    unlinkModem
 }
