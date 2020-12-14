@@ -220,7 +220,7 @@ const updateThingType = async function updateThingType(box){
   
 
 // needs imsi 
-const unlinkModem = async function unlinkModem(imsi){
+const deactivateModem = async function deactivateModem(imsi){
     try {
         let response = await fetch(app.TINGG_URL+'/modems/'+imsi+'/link',{
             method:'DELETE',
@@ -230,7 +230,7 @@ const unlinkModem = async function unlinkModem(imsi){
                 if (response.status === 401) {
                     console.log("Unauthorized");
                     access_token = await refreshToken(access_token);
-                    unlinkModem(imsi);
+                    deactivateModem(imsi);
                 }
                 if (response.status === 400) {
                     console.log("Invalid Input");
@@ -281,5 +281,5 @@ module.exports = {
     access_token,
     initTingg,
     updateThingType,
-    unlinkModem
+    deactivateModem
 }

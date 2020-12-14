@@ -5,6 +5,7 @@ const { User } = require('@sensebox/opensensemap-api-models'),
   { checkContentType, redactEmail, postToSlack, clearCache } = require('../helpers/apiUtils'),
   { retrieveParameters } = require('../helpers/userParamHelpers'),
   handleError = require('../helpers/errorHandler'),
+  {deactivateModem} = require('../helpers/tinggHelpers'),
   { createToken, refreshJwt, invalidateToken } = require('../helpers/jwtHelpers');
 
 /**
@@ -301,6 +302,18 @@ const requestEmailConfirmation = async function requestEmailConfirmation (req, r
   }
 };
 
+
+const deleteModem = async function deleteModem(req,res,next){
+  try{  
+    const {imsi} = req._userParams;
+    let response = await deactivateModem(imsi)
+    res.send(200,{code:'Ok',message:`GSM Module has been deactivated!`})
+  }
+  catch(error){
+    handleError(err,next);
+  }
+}
+
 module.exports = {
   registerUser: [
     checkContentType,
@@ -371,5 +384,11 @@ module.exports = {
       { predef: 'password' }
     ]),
     deleteUser
+  ],
+  deleteModem:[
+    retrieveParameters([
+      {predef:'imsi',name:'imsi',required:true}
+    ]),
+    deleteModem
   ]
 };
