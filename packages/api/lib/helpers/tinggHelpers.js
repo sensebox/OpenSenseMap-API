@@ -22,6 +22,11 @@ const initTingg = async function newbox(box) {
     try {
         const thing_type_id = await createThingType(box);
         const thing_id = await createThing(box.name, thing_type_id);
+
+        //box.integrations.gsm = {...box.integrations.gsm,thing_id,thing_type_id}
+        // Make update call to box here
+    
+
         // linkModem(box.tingg.gsm,thing_id)
         return {thing_id,thing_type_id};
     }
@@ -36,7 +41,6 @@ const initTingg = async function newbox(box) {
  * @param {"email":"email","password":"password"} data 
  */
 const login = async function login(data) {
-    console.log("new loign")
     try {
         let response = await fetch(app.TINGG_URL + 'auth/login', {
             method: 'POST',
@@ -187,10 +191,10 @@ const linkModem = async function linkModem(imsi, thing_id) {
 
 }
 // needs new sensors array 
-const updateThingType = async function updateThingType(data){
+const updateThingType = async function updateThingType(box){
     try {
-        const thingtypebody = buildBody(data)
-        let response = await fetch(app.TINGG_URL+'/thing-types/'+data.integrations.gsm.imsi,{
+        const thingtypebody = buildBody(box)
+        let response = await fetch(app.TINGG_URL+'/thing-types/'+box.integrations.gsm.thing_type_id,{
             method:'PATCH',
             body:JSON.stringify(thingtypebody),
             headers:{"Authorization":"Bearer "+access_token,"Content-Type": "application/json"}
@@ -199,7 +203,7 @@ const updateThingType = async function updateThingType(data){
             if (response.status === 401) {
                 console.log("Unauthorized");
                 access_token = await refreshToken(access_token);
-                updateThingType(data);
+                updateThingType(box);
             }
             if (response.status === 400) {
                 console.log("Invalid Input");

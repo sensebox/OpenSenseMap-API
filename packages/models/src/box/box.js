@@ -861,6 +861,12 @@ boxSchema.methods.updateBox = function updateBox (args) {
       profile,
       decodeOptions: ttnDecodeOptions
     } = {},
+    gsm:{
+      imsi,
+      secret_code,
+      thing_id,
+      thing_type_id
+    } = {},
     location,
     sensors,
     addons: { add: addonToAdd } = {}
@@ -876,11 +882,14 @@ boxSchema.methods.updateBox = function updateBox (args) {
   if (args.ttn) {
     args['integrations.ttn'] = { app_id, dev_id, port, profile, decodeOptions: ttnDecodeOptions };
   }
+  if(args.gsm){
+    args['integrations.gsm'] = {imsi,secret_code,thing_id,thing_type_id}
+  }
 
   const box = this;
 
   // only grouptag, description and weblink can removed through setting them to empty string ('')
-  for (const prop of ['name', 'exposure', 'grouptag', 'description', 'weblink', 'image', 'integrations.mqtt', 'integrations.ttn', 'model', 'useAuth']) {
+  for (const prop of ['name', 'exposure', 'grouptag', 'description', 'weblink', 'image', 'integrations.mqtt', 'integrations.ttn','integrations.gsm', 'model', 'useAuth']) {
     if (typeof args[prop] !== 'undefined') {
       box.set(prop, (args[prop] === '' ? undefined : args[prop]));
     }
