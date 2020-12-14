@@ -137,6 +137,10 @@ const updateBox = async function updateBox (req, res, next) {
     let box = await Box.findBoxById(req._userParams.boxId, { lean: false, populate: false });
     box = await box.updateBox(req._userParams);
     if (box._sensorsChanged === true) {
+      if(box.integrations.gsm){
+        // update thing types
+        updateThingType(box);
+      }
       req.user.mail('newSketch', box);
     }
 

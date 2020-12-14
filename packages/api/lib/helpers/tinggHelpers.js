@@ -194,6 +194,7 @@ const linkModem = async function linkModem(imsi, thing_id) {
 const updateThingType = async function updateThingType(box){
     try {
         const thingtypebody = buildBody(box)
+        console.log("updating thingtypes",thingtypebody)
         let response = await fetch(app.TINGG_URL+'/thing-types/'+box.integrations.gsm.thing_type_id,{
             method:'PATCH',
             body:JSON.stringify(thingtypebody),
@@ -211,6 +212,7 @@ const updateThingType = async function updateThingType(box){
             }
         }
         response = await response.json();
+        console.log("response tingg update",response);
         return response;
     } catch (error) {
         console.log(error);
