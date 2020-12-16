@@ -376,7 +376,6 @@ const postNewMeasurementTingg = async function postNewMeasurementTingg (req, res
     if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
       throw new UnauthorizedError('Box access token not valid!');
     }
-
     const [measurement] = await Measurement.decodeMeasurements([{
       sensor_id: sensorId,
       value,

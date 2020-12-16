@@ -1,12 +1,14 @@
 'use strict';
 const fetch = require('node-fetch');
+const handleError = require('./errorHandler');
+
 const app = {
     TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
-    email:'e_thie10@uni-muenster.de',
-    password:'senseboxRocks'
-
-}
-let access_token;
+    email: 'e.thieme@reedu.de',
+    password: 'senseboxRocks'
+},
+    TinggError = require('./tinggError');
+let access_token = '572390572385';
 
 /**
  * inits tingg registration process 
@@ -15,24 +17,22 @@ let access_token;
  * 2. createThing ( name, thingtypeid)
  * 3. linkModem (imsi,thingid)
  */
-const initTingg = async function newbox(box) {
-    if (!access_token) {
-        access_token = await login({ "email": app.email, "password": app.password })
+const initTingg = async function initTingg(box) {
+    let thing_id, thing_type_id, link_id;
+    for (let index = 0; index < 2; index++) {
+        try {
+            thing_type_id = await createThingType(box);
+            thing_id = await createThing(box.name, thing_type_id);
+            link_id = await linkModem(box.integrations.gsm.imsi, thing_id);
+            break;
+        } catch (e) {
+            if (e.message !== '401') {
+                throw e
+            }
+            await handleAuthError(e);
+        }
     }
-    try {
-        const thing_type_id = await createThingType(box);
-        const thing_id = await createThing(box.name, thing_type_id);
-
-        //box.integrations.gsm = {...box.integrations.gsm,thing_id,thing_type_id}
-        // Make update call to box here
-    
-
-        // linkModem(box.tingg.gsm,thing_id)
-        return {thing_id,thing_type_id};
-    }
-    catch (error) {
-        console.error(error)
-    }
+    return { thing_id, thing_type_id };
 }
 
 
@@ -41,43 +41,35 @@ const initTingg = async function newbox(box) {
  * @param {"email":"email","password":"password"} data 
  */
 const login = async function login(data) {
-    try {
-        let response = await fetch(app.TINGG_URL + 'auth/login', {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: { "Content-Type": "application/json" }
-        })
-        if (!response.ok) {
-            throw new Error(`HTTP Error status : ${response.status}`)
-        }
-        response = await response.json();
-        return response.token;
-    } catch (error) {
-        console.log(error);
-    }
+    let response = await fetch(app.TINGG_URL + 'auth/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+    })
+    response = await response.json();
+    return response.token;
+
 }
 /**
  * gets new token based on old one
  * @param token: String
  */
 const refreshToken = async function refreshToken() {
-    try {
-        let response = await fetch(app.TINGG_URL + 'auth/token-refresh', {
-            method: 'POST',
-            headers: { "Authorization": "Bearer " + access_token ,"Content-Type": "application/json" },
-        })
-        if (!response.ok) {
-            if(response.status === 401){
-                let new_access_token = await login({ "email": app.email, "password": app.password })
-                return new_access_token;
-            }
-            throw new Error(`HTTP Error status at refresh token : ${response.status}`)
+    let response = await fetch(app.TINGG_URL + 'auth/token-refresh', {
+        method: 'POST',
+        headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('Unauthorized Refresh');
         }
-        response = await response.json();
-        return response.token;
-    } catch (error) {
-        console.log(error);
+        else {
+            throw new TinggError(`Internal Server or unkown error ${response.status} `, { type: 'InternalServerError' })
+        }
     }
+    response = await response.json();
+    return response.token;
+
 
 }
 /*
@@ -87,35 +79,29 @@ const refreshToken = async function refreshToken() {
     output: thing_type_id
 */
 const createThingType = async function createThingType(data) {
-    try {
-        const thingtypebody = buildBody(data);
-        const headers =  { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
-        let response = await fetch(app.TINGG_URL + '/thing-types', {
-            method: 'POST',
-            body: JSON.stringify(thingtypebody),
-            headers
-        })
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.log("Unauthorized");
-                access_token = await refreshToken();
-                createThingType(data);
-            }
-            if (response.status === 400) {
-                console.log("Invalid Input");
-                throw new Error('Invalid Input');
-            }
-            else {
-           throw new Error(`HTTP Error status : ${response.headers}`)
-            }
-        }
-        response = await response.json();
-        let thing_type_id = response.id;
-        return thing_type_id;
+    const thingtypebody = buildBody(data);
+    let response = await fetch(app.TINGG_URL + '/thing-types', {
+        method: 'POST',
+        body: JSON.stringify(thingtypebody),
+        headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
 
-    } catch (error) {
-        console.log(error);
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
+        }
+        if (response.status === 400) {
+            throw new TinggError('Invalid Input at createThingType', { type: 'BadRequestError' })
+        }
+        else {
+            throw new TinggError(`Internal Server or unkown error ${response.status} `, { type: 'InternalServerError' })
+        }
     }
+    response = await response.json();
+    let thing_type_id = response.id;
+    return thing_type_id;
+
+
 
 }
 
@@ -132,31 +118,25 @@ const createThingType = async function createThingType(data) {
 */
 
 const createThing = async function createThing(name, thingid) {
-    try {
-        const body = { "name": name, "thing_type_id": thingid }
-        let response = await fetch(app.TINGG_URL + '/things', {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
-        })
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.log("Unauthorized");
-                access_token = await refreshToken(access_token);
-                createThing(name, thingid);
-            }
-            if (response.status === 400) {
-                console.log("Invalid Input");
-                throw new Error('Invalid Input');
-            }
-
+    const body = { "name": name, "thing_type_id": thingid }
+    let response = await fetch(app.TINGG_URL + '/things', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
         }
-        response = await response.json();
-        response = response.id;
-        return response;
-    } catch (error) {
-        console.log(error);
+        if (response.status === 400) {
+            throw new TinggError('Invalid Input at createThing', { type: 'BadRequestError' })
+        }
+        throw new Error('Internal Server or unkown error', { type: 'InternalServerError' })
+
     }
+    response = await response.json();
+    response = response.id;
+    return response;
 
 }
 
@@ -166,85 +146,105 @@ const createThing = async function createThing(name, thingid) {
     output:200/400 status code 
 */
 const linkModem = async function linkModem(imsi, thing_id) {
-    try {
-        let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
-            method: 'POST',
-            body: thing_id,
-            headers: { "Authorization": "Bearer " + access_token }
-        })
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.log("Unauthorized");
-                access_token = await refreshToken(access_token);
-                linkModem(imsi, thing_id);
-            }
-            if (response.status === 400) {
-                console.log("Invalid Input");
-                throw new Error('Invalid Input');
-            }
+    let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
+        method: 'POST',
+        body: JSON.stringify({ thing_id }),
+        headers: { "Authorization": "Bearer " + access_token,"Content-Type": "application/json" }
+    })
+    if (!response.ok) {
+        console.log(response)
+        if (response.status === 401) {
+            throw new Error('401')
         }
-        response = await response.json();
-        return response;
-    } catch (error) {
-        console.log(error);
+        if (response.status === 400) {
+            console.log("error????")
+            throw new TinggError('Invalid Input at linkModem', { type: 'BadRequestError' })
+        }
+        if (response.status === 404) {
+            throw new TinggError('Modem not found or thing not found', { type: 'NotFoundError' })
+        }
+        if (response.status === 412) {
+            throw new TinggError('Modem is already active', { type: 'PreconditionFailedError' })
+        }
+        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+
     }
+    response = await response.json();
+    console.log("link modem response", response)
+    return response;
+
 
 }
 // needs new sensors array 
-const updateThingType = async function updateThingType(box){
-    try {
-        const thingtypebody = buildBody(box)
-        let response = await fetch(app.TINGG_URL+'/thing-types/'+box.integrations.gsm.thing_type_id,{
-            method:'PATCH',
-            body:JSON.stringify(thingtypebody),
-            headers:{"Authorization":"Bearer "+access_token,"Content-Type": "application/json"}
-        })
-        if(!response.ok){
-            if (response.status === 401) {
-                console.log("Unauthorized");
-                access_token = await refreshToken(access_token);
-                updateThingType(box);
-            }
-            if (response.status === 400) {
-                console.log("Invalid Input");
-                throw new Error('Invalid Input');
-            }
+const updateThingType = async function updateThingType(box) {
+    const thingtypebody = buildBody(box)
+    let response = await fetch(app.TINGG_URL + '/thing-types/' + box.integrations.gsm.thing_type_id, {
+        method: 'PATCH',
+        body: JSON.stringify(thingtypebody),
+        headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
         }
-        response = await response.json();
-        return response;
-    } catch (error) {
-        console.log(error);
+        if (response.status === 400) {
+            throw new TinggError('Invalid Input at updateThing', { type: 'BadRequestError' })
+        }
+        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
     }
+    response = await response.json();
+    return response;
 }
 
-  
+
 
 // needs imsi 
-const deactivateModem = async function deactivateModem(imsi){
-    try {
-        let response = await fetch(app.TINGG_URL+'/modems/'+imsi+'/link',{
-            method:'DELETE',
-            headers:{"Authorization":"Bearer "+access_token}
-            })
-            if(!response.ok){
-                if (response.status === 401) {
-                    console.log("Unauthorized");
-                    access_token = await refreshToken(access_token);
-                    deactivateModem(imsi);
-                }
-                if (response.status === 400) {
-                    console.log("Invalid Input");
-                    throw new Error('Invalid Input');
-                }
-            }
-            response = await response.json();
-            return response
+const deactivateModem = async function deactivateModem(imsi) {
+    let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
+        method: 'DELETE',
+        headers: { "Authorization": "Bearer " + access_token }
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
         }
-    catch (error) {
-        console.log(error);
+        if (response.status === 400) {
+            throw new Error('Invalid Input');
+        }
+        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
     }
+    response = await response.json();
+    return response
+
 }
 
+const verifyModem = async function verifyModem(data) {
+    let response = await fetch(app.TINGG_URL + '/modems/' + data.imsi + '/verify?code=' + data.secret_code, {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + access_token }
+    })
+    if (!response.ok) {
+        if (response.status === 403) {
+            throw new TinggError('IMSI and Code do not match', { type: 'ForbiddenError' });
+        }
+        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+    }
+    response = await response.json();
+    return response;
+}
+
+const handleAuthError = async function handleAuthError() {
+    if (!access_token) {
+        access_token = await login({ "email": app.email, "password": app.password })
+    }
+    else {
+        try {
+            access_token = await refreshToken();
+        } catch (e) {
+            access_token = await login({ "email": app.email, "password": app.password })
+        }
+    }
+}
 
 
 /**Helper function to build the data accordingly from the sensor array
@@ -281,5 +281,6 @@ module.exports = {
     access_token,
     initTingg,
     updateThingType,
-    deactivateModem
+    deactivateModem,
+    verifyModem
 }

@@ -13,6 +13,7 @@ const handleError = function (err, next) {
     return next(new restifyErrors.BadRequestError(err.message));
   }
 
+
   if (err.name === 'ValidationError') {
     const msgs = [];
     for (const field in err.errors) {
@@ -22,6 +23,30 @@ const handleError = function (err, next) {
     }
 
     return next(new restifyErrors.UnprocessableEntityError(`Validation failed: ${msgs.join(', ')}`));
+  }
+
+  if(err.name === 'TinggError'){
+    console.log(err)
+    switch (err.data.type) {
+      case 'InternalServerError': // 500
+        return next(new restifyErrors.InternalServerError(err.message))
+        break;
+      case 'ForbiddenError': // 401
+        return next(new restifyErrors.ForbiddenError(err.message))
+        break;
+      case 'BadRequestError': // 400
+        return next(new restifyErrors.BadRequestError(err.message))
+        break
+      case 'NotFoundError': // 404
+        return next(new restifyErrors.NotFoundError(err.message))
+        break
+      case 'PreconditionFailedError': // 412
+        return next(new restifyErrors.PreconditionFailedError(err.message))
+        break;
+      default:
+        return next(new restifyErrors.InternalServerError(err.message))
+        break;
+    }
   }
 
   if (restifyErrorNames.includes(err.name)) {
