@@ -64,9 +64,8 @@ const refreshToken = async function refreshToken() {
         if (response.status === 401) {
             throw new Error('Unauthorized Refresh');
         }
-        else {
-            throw new TinggError(`Internal Server or unkown error ${response.status} `, { type: 'InternalServerError' })
-        }
+        throw new TinggError(response.statusText, { status: response.status })
+
     }
     response = await response.json();
     return response.token;
@@ -91,12 +90,8 @@ const createThingType = async function createThingType(data) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 400) {
-            throw new TinggError('Invalid Input at createThingType', { type: 'BadRequestError' })
-        }
-        else {
-            throw new TinggError(`Internal Server or unkown error ${response.status} `, { type: 'InternalServerError' })
-        }
+        throw new TinggError(response.statusText, { status: response.status })
+
     }
     response = await response.json();
     let thing_type_id = response.id;
@@ -129,10 +124,8 @@ const createThing = async function createThing(name, thingid) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 400) {
-            throw new TinggError('Invalid Input at createThing', { type: 'BadRequestError' })
-        }
-        throw new Error('Internal Server or unkown error', { type: 'InternalServerError' })
+        throw new TinggError(response.statusText, { status: response.status })
+
 
     }
     response = await response.json();
@@ -157,17 +150,7 @@ const linkModem = async function linkModem(imsi, thing_id) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 400) {
-            console.log("error????")
-            throw new TinggError('Invalid Input at linkModem', { type: 'BadRequestError' })
-        }
-        if (response.status === 404) {
-            throw new TinggError('Modem not found or thing not found', { type: 'NotFoundError' })
-        }
-        if (response.status === 412) {
-            throw new TinggError('Modem is already active', { type: 'PreconditionFailedError' })
-        }
-        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+        throw new TinggError(response.statusText, { status: response.status })
 
     }
     response = await response.json();
@@ -187,10 +170,7 @@ const updateThingType = async function updateThingType(box) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 400) {
-            throw new TinggError('Invalid Input at updateThing', { type: 'BadRequestError' })
-        }
-        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+        throw new TinggError(response.statusText, { status: response.status })
     }
     response = await response.json();
     return response;
@@ -208,10 +188,7 @@ const deactivateModem = async function deactivateModem(imsi) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 400) {
-            throw new Error('Invalid Input');
-        }
-        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+        throw new TinggError(response.statusText, { status: response.status })
     }
     response = await response.json();
     return response
@@ -227,14 +204,7 @@ const verifyModem = async function verifyModem(data) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        if (response.status === 403) {
-            throw new TinggError('IMSI and Code do not match', { type: 'ForbiddenError' });
-        }
-        if (response.status === 404){
-            throw new TinggError('Modem or code not found',{type:'BadRequestError'})
-        }
-        console.log(response)
-        throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
+        throw new TinggError(response.statusText, { status: response.status })
     }
     return true;
 }

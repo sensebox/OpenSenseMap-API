@@ -27,20 +27,20 @@ const handleError = function (err, next) {
 
   if(err.name === 'TinggError'){
     console.log(err)
-    switch (err.data.type) {
-      case 'InternalServerError': // 500
+    switch (err.data.status) {
+      case 500: // 500 InternalServerError
         return next(new restifyErrors.InternalServerError(err.message))
         break;
-      case 'ForbiddenError': // 401
+      case 401: // 401 ForbiddenError
         return next(new restifyErrors.ForbiddenError(err.message))
         break;
-      case 'BadRequestError': // 400
+      case 400: // 400 BadRequestError
         return next(new restifyErrors.BadRequestError(err.message))
         break
-      case 'NotFoundError': // 404
+      case 404: // 404 NotFoundError
         return next(new restifyErrors.NotFoundError(err.message))
         break
-      case 'PreconditionFailedError': // 412
+      case 412: // 412 PreconditionFailedError
         return next(new restifyErrors.PreconditionFailedError(err.message))
         break;
       default:
