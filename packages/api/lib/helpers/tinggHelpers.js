@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const handleError = require('./errorHandler');
 
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1/',
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1',
     email: 'e.thieme@reedu.de',
     password: 'senseboxRocks'
 },
@@ -21,6 +21,7 @@ const initTingg = async function initTingg(box) {
     let thing_id, thing_type_id, link_id;
     for (let index = 0; index < 2; index++) {
         try {
+            let verified = await verifyModem({"imsi":box.integrations.gsm.imsi,"secret_code":box.integrations.gsm.secret_code})
             thing_type_id = await createThingType(box);
             thing_id = await createThing(box.name, thing_type_id);
             link_id = await linkModem(box.integrations.gsm.imsi, thing_id);
@@ -41,7 +42,7 @@ const initTingg = async function initTingg(box) {
  * @param {"email":"email","password":"password"} data 
  */
 const login = async function login(data) {
-    let response = await fetch(app.TINGG_URL + 'auth/login', {
+    let response = await fetch(app.TINGG_URL + '/auth/login', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
@@ -55,7 +56,7 @@ const login = async function login(data) {
  * @param token: String
  */
 const refreshToken = async function refreshToken() {
-    let response = await fetch(app.TINGG_URL + 'auth/token-refresh', {
+    let response = await fetch(app.TINGG_URL + '/auth/token-refresh', {
         method: 'POST',
         headers: { "Authorization": "Bearer " + access_token, "Content-Type": "application/json" }
     })
@@ -170,7 +171,6 @@ const linkModem = async function linkModem(imsi, thing_id) {
 
     }
     response = await response.json();
-    console.log("link modem response", response)
     return response;
 
 
@@ -219,18 +219,24 @@ const deactivateModem = async function deactivateModem(imsi) {
 }
 
 const verifyModem = async function verifyModem(data) {
-    let response = await fetch(app.TINGG_URL + '/modems/' + data.imsi + '/verify?code=' + data.secret_code, {
+    let response = await fetch(app.TINGG_URL + '/modems/' + data.imsi + '/own?code=' + data.secret_code, {
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + access_token }
     })
     if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
+        }
         if (response.status === 403) {
             throw new TinggError('IMSI and Code do not match', { type: 'ForbiddenError' });
         }
+        if (response.status === 404){
+            throw new TinggError('Modem or code not found',{type:'BadRequestError'})
+        }
+        console.log(response)
         throw new TinggError('Internal Server or unkown error', { type: 'InternalServerError' })
     }
-    response = await response.json();
-    return response;
+    return true;
 }
 
 const handleAuthError = async function handleAuthError() {
