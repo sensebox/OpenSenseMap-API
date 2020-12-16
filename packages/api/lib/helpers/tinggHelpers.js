@@ -19,6 +19,7 @@ let access_token = '572390572385';
  */
 const initTingg = async function initTingg(box) {
     let thing_id, thing_type_id, link_id;
+    // Try 2 times ; if access token is expired and at startup this is required
     for (let index = 0; index < 2; index++) {
         try {
             let verified = await verifyModem({"imsi":box.integrations.gsm.imsi,"secret_code":box.integrations.gsm.secret_code})
@@ -75,11 +76,11 @@ const refreshToken = async function refreshToken() {
 /*
     calls POST https://api.tingg.io/v1/thing-types to create thing types 
     should be called right after verifyModem()
-    input: sensors, box , name (look pdf for body example)
+    input: data:{box}
     output: thing_type_id
 */
-const createThingType = async function createThingType(data) {
-    const thingtypebody = buildBody(data);
+const createThingType = async function createThingType(box) {
+    const thingtypebody = buildBody(box);
     let response = await fetch(app.TINGG_URL + '/thing-types', {
         method: 'POST',
         body: JSON.stringify(thingtypebody),
@@ -113,8 +114,8 @@ const createThingType = async function createThingType(data) {
 
 */
 
-const createThing = async function createThing(name, thingid) {
-    const body = { "name": name, "thing_type_id": thingid }
+const createThing = async function createThing(boxname, thingid) {
+    const body = { "name": boxname, "thing_type_id": thingid }
     let response = await fetch(app.TINGG_URL + '/things', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -158,7 +159,11 @@ const linkModem = async function linkModem(imsi, thing_id) {
 
 
 }
-// needs new sensors array 
+/**
+ * Updates thing types at tingg
+ * uses sensors array from changed box to build new thing-types
+ * @param {box} box 
+ */
 const updateThingType = async function updateThingType(box) {
     const thingtypebody = buildBody(box)
     let response = await fetch(app.TINGG_URL + '/thing-types/' + box.integrations.gsm.thing_type_id, {
@@ -177,8 +182,11 @@ const updateThingType = async function updateThingType(box) {
 }
 
 
-
-// needs imsi 
+/**
+ * Deactivates modem for the user account the token is specified with
+ * Gets imsi as request parameter
+ * @param {5378459734895} imsi 
+ */
 const deactivateModem = async function deactivateModem(imsi) {
     let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
         method: 'DELETE',
@@ -194,7 +202,10 @@ const deactivateModem = async function deactivateModem(imsi) {
     return response
 
 }
-
+/**
+ * Verifies Modem before registering thing and thing types
+ * @param {"imsi":5384658345,"secret_code":"LHIUYSjhj"} data 
+ */
 const verifyModem = async function verifyModem(data) {
     let response = await fetch(app.TINGG_URL + '/modems/' + data.imsi + '/own?code=' + data.secret_code, {
         method: 'GET',
@@ -208,7 +219,9 @@ const verifyModem = async function verifyModem(data) {
     }
     return true;
 }
-
+/**
+ * Error handler when Authentifcation at tingg failed
+ */
 const handleAuthError = async function handleAuthError() {
     if (!access_token) {
         access_token = await login({ "email": app.email, "password": app.password })
