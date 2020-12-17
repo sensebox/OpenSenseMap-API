@@ -1,6 +1,6 @@
 'use strict';
 const fetch = require('node-fetch');
-config = require('config');
+const config = require('config');
 const app = {
     TINGG_URL: 'https://api.stage01a.tingg.io/v1'
 },
