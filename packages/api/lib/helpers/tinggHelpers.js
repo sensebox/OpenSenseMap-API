@@ -1,14 +1,11 @@
 'use strict';
 const fetch = require('node-fetch');
-const handleError = require('./errorHandler');
-
+config = require('config');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1',
-    email: 'e.thieme@reedu.de',
-    password: 'senseboxRocks'
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1'
 },
-    TinggError = require('./tinggError');
-let access_token = '572390572385';
+TinggError = require('./tinggError');
+let access_token;
 
 /**
  * inits tingg registration process 
@@ -224,13 +221,13 @@ const verifyModem = async function verifyModem(data) {
  */
 const handleAuthError = async function handleAuthError() {
     if (!access_token) {
-        access_token = await login({ "email": app.email, "password": app.password })
+        access_token = await login({ "email": config.get('integrations.gsm.email'), "password": config.get('integrations.gsm.password') })
     }
     else {
         try {
             access_token = await refreshToken();
         } catch (e) {
-            access_token = await login({ "email": app.email, "password": app.password })
+            access_token = await login({ "email": config.get('integrations.gsm.email'), "password": config.get('integrations.gsm.password') })
         }
     }
 }
