@@ -203,6 +203,7 @@ const updateThingType = async function updateThingType(box) {
  * @param {5378459734895} imsi 
  */
 const deactivateModem = async function deactivateModem(imsi) {
+    console.log(imsi);
     let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
         method: 'DELETE',
         headers: { "Authorization": "Bearer " + access_token }
@@ -233,6 +234,25 @@ const verifyModem = async function verifyModem(data) {
         throw new TinggError(`Ting Error: ${response.statusText}`, { status: response.status })
     }
     return response;
+}
+const checkModemInUse = async function checkModemInUse(data){
+    let response = await fetch(app.TINGG_URL+'/modems/'+data.imsi,{
+        method: 'GET',
+        headers : {'Authorization':'Bearer '+access_token}
+    })
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('401')
+        }
+        throw new TinggError(`Ting Error: ${response.statusText}`, { status: response.status })
+    }
+    response = await response.json();
+    if(response.thing_id){
+        throw new TinggError(`Tingg Error: Modem already in use, please deactivate before registering a new senseBox to this IMSI`, { status: 412 });
+    }
+    return false
+    
+
 }
 /**
  * Error handler when Authentifcation at tingg failed
@@ -289,5 +309,6 @@ module.exports = {
     updateThingType,
     deactivateModem,
     verifyModem,
+    checkModemInUse,
     wrapper
 }

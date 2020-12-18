@@ -5,7 +5,7 @@ const { User } = require('@sensebox/opensensemap-api-models'),
   { checkContentType, redactEmail, postToSlack, clearCache } = require('../helpers/apiUtils'),
   { retrieveParameters } = require('../helpers/userParamHelpers'),
   handleError = require('../helpers/errorHandler'),
-  {deactivateModem,verifyModem,wrapper} = require('../helpers/tinggHelpers'),
+  {deactivateModem,verifyModem,checkModemInUse,wrapper} = require('../helpers/tinggHelpers'),
   { createToken, refreshJwt, invalidateToken } = require('../helpers/jwtHelpers');
 
 /**
@@ -319,7 +319,8 @@ const verifyTinggModem = async function verifyTinggModem(req,res,next){
     const {imsi, secret_code } = req._userParams;
     console.log(imsi,secret_code)
     let response = await wrapper(verifyModem,{'imsi':imsi,'secret_code':secret_code});
-    res.send(200,{code:'Ok',message:`IMSI and secret code verified`})
+    let inUse = await wrapper(checkModemInUse,{'imsi':imsi})
+    res.send(200,{code:'Ok',message:'IMSI and code verified, IMSI is not being used yet'})
   }catch(err){
     handleError(err,next);
   }
