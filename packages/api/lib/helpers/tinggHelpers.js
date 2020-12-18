@@ -2,7 +2,9 @@
 const fetch = require('node-fetch');
 const config = require('config');
 const app = {
-    TINGG_URL: 'https://api.stage01a.tingg.io/v1'
+    TINGG_URL: 'https://api.stage01a.tingg.io/v1',
+    email:'e.thieme@reedu.de',
+    pw:'senseboxRocks'
 },
 TinggError = require('./tinggError');
 let access_token;
@@ -14,6 +16,21 @@ let access_token;
  * 2. createThing ( name, thingtypeid)
  * 3. linkModem (imsi,thingid)
  */
+
+const wrapper = async function wrapper(func,data){
+    // wrapper function which will execute func in a for loop
+    for (let index = 0; index<2;index++){
+        try {
+            let response = await func(data);
+        } catch (e) {
+            if(e.message !== '401'){
+                throw e;
+            }
+            await handleAuthError(e);
+        }
+    }
+}
+
 const initTingg = async function initTingg(box) {
     let thing_id, thing_type_id, link_id;
     // Try 2 times ; if access token is expired and at startup this is required
@@ -23,6 +40,7 @@ const initTingg = async function initTingg(box) {
             thing_type_id = await createThingType(box);
             thing_id = await createThing(box.name, thing_type_id);
             link_id = await linkModem(box.integrations.gsm.imsi, thing_id);
+            // if everything is successful break from for loop
             break;
         } catch (e) {
             if (e.message !== '401') {
@@ -212,16 +230,18 @@ const verifyModem = async function verifyModem(data) {
         if (response.status === 401) {
             throw new Error('401')
         }
-        throw new TinggError(response.statusText, { status: response.status })
+        throw new TinggError(`Ting Error: ${response.statusText}`, { status: response.status })
     }
-    return true;
+    return response;
 }
 /**
  * Error handler when Authentifcation at tingg failed
  */
 const handleAuthError = async function handleAuthError() {
     if (!access_token) {
-        access_token = await login({ "email": config.get('integrations.gsm.email'), "password": config.get('integrations.gsm.password') })
+        // access_token = await login({ "email": config.get('integrations.gsm.email'), "password": config.get('integrations.gsm.password') })
+         access_token = await login({ "email": app.email, "password": app.pw })
+
     }
     else {
         try {
@@ -268,5 +288,6 @@ module.exports = {
     initTingg,
     updateThingType,
     deactivateModem,
-    verifyModem
+    verifyModem,
+    wrapper
 }

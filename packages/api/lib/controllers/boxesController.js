@@ -39,7 +39,7 @@
 const
   { Box } = require('@sensebox/opensensemap-api-models'),
   { addCache, clearCache, checkContentType, redactEmail, postToSlack } = require('../helpers/apiUtils'),
-  { initTingg,updateThingType,unlinkModem } = require('../helpers/tinggHelpers'),
+  { initTingg,updateThingType,unlinkModem,wrapper } = require('../helpers/tinggHelpers'),
   { point } = require('@turf/helpers'),
   classifyTransformer = require('../transformers/classifyTransformer'),
   {
@@ -139,7 +139,7 @@ const updateBox = async function updateBox (req, res, next) {
     if (box._sensorsChanged === true) {
       if(box.integrations.gsm){
         // update thing types
-        updateThingType(box);
+        let response = await wrapper(updateThingType,box);
       }
       req.user.mail('newSketch', box);
     }

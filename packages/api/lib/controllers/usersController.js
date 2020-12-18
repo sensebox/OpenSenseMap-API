@@ -5,7 +5,7 @@ const { User } = require('@sensebox/opensensemap-api-models'),
   { checkContentType, redactEmail, postToSlack, clearCache } = require('../helpers/apiUtils'),
   { retrieveParameters } = require('../helpers/userParamHelpers'),
   handleError = require('../helpers/errorHandler'),
-  {deactivateModem} = require('../helpers/tinggHelpers'),
+  {deactivateModem,verifyModem,wrapper} = require('../helpers/tinggHelpers'),
   { createToken, refreshJwt, invalidateToken } = require('../helpers/jwtHelpers');
 
 /**
@@ -306,10 +306,21 @@ const requestEmailConfirmation = async function requestEmailConfirmation (req, r
 const deleteModem = async function deleteModem(req,res,next){
   try{  
     const {imsi} = req._userParams;
-    let response = await deactivateModem(imsi)
+    let response = await wrapper(deactivateModem,imsi)
     res.send(200,{code:'Ok',message:`GSM Module has been deactivated!`})
   }
-  catch(error){
+  catch(err){
+    handleError(err,next);
+  }
+}
+
+const verifyTinggModem = async function verifyTinggModem(req,res,next){
+  try{
+    const {imsi, secret_code } = req._userParams;
+    console.log(imsi,secret_code)
+    let response = await wrapper(verifyModem,{'imsi':imsi,'secret_code':secret_code});
+    res.send(200,{code:'Ok',message:`IMSI and secret code verified`})
+  }catch(err){
     handleError(err,next);
   }
 }
@@ -390,5 +401,12 @@ module.exports = {
       {predef:'imsi',name:'imsi',required:true}
     ]),
     deleteModem
+  ],
+  verifyTinggModem : [
+    retrieveParameters([
+      {predef:'imsi', name:'imsi',required:true},
+      {predef:'secret_code',name:'secret_code',required:true}
+    ]),
+    verifyTinggModem
   ]
 };
