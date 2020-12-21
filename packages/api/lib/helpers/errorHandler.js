@@ -40,8 +40,9 @@ const handleError = function (err, next) {
       case 404: // 404 NotFoundError
         return next(new restifyErrors.NotFoundError(err.message))
         break
-      case 412: // 412 PreconditionFailedError
-        return next(new restifyErrors.PreconditionFailedError(err.message))
+      case 412: // 412 PreconditionFailedError TODO: Throws 404 Error eventhough its a 412,412 leads to UI login out 
+        return next(new restifyErrors.NotFoundError(err.message))
+
         break;
       default:
         return next(new restifyErrors.InternalServerError(err.message))
