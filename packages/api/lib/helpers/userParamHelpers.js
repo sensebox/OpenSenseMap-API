@@ -535,6 +535,9 @@ const decodeTinggMessage = function decodeTinggMessage(topic,payload){
   const value = payload.value;
   const createdAt = payload.createdAt;
   const location = payload.location;
+  console.log("decoded tingg");
+  console.log(boxId,sensorId);
+  console.log(value);
   return {boxId, sensorId, value, createdAt, location}
 }
 
