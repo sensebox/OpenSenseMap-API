@@ -324,6 +324,7 @@ const postNewMeasurement = async function postNewMeasurement (req, res, next) {
  * }
  */
 const postNewMeasurements = async function postNewMeasurements (req, res, next) {
+  console.log("Normal Measurement")
   const { boxId, luftdaten, hackair } = req._userParams;
   let contentType = req.getContentType();
 
