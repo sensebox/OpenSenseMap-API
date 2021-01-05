@@ -444,8 +444,8 @@ const handleAndSetParameterRequest = function handleAndSetParameterRequest (req,
 const retrieveParameters = function retrieveParameters (parameters = []) {
   return function (req, res, next) {
     console.log('body',req.body);
-    console.log('content type',_contentType);
-    console.log('url',Url);
+    console.log('url',req._url);
+    console.log('headers',req.rawHeaders)
     //for (let { name, aliases, dataType, allowedValues, mapping, required, defaultValue, predef } of parameters) {
     for (const parameter of parameters) {
       // predef has precedence over all other keys
