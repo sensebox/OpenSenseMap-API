@@ -443,7 +443,9 @@ const handleAndSetParameterRequest = function handleAndSetParameterRequest (req,
 // max: maximal value for Numbers and Integers. Compared with <
 const retrieveParameters = function retrieveParameters (parameters = []) {
   return function (req, res, next) {
-    console.log(req);
+    console.log('body',req.body);
+    console.log('content type',_contentType);
+    console.log('url',Url);
     //for (let { name, aliases, dataType, allowedValues, mapping, required, defaultValue, predef } of parameters) {
     for (const parameter of parameters) {
       // predef has precedence over all other keys
