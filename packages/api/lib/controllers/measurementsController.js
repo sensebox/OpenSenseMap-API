@@ -370,11 +370,9 @@ const postNewMeasurements = async function postNewMeasurements (req, res, next) 
  * @apiHeader {String} access_token Box' unique access_token. Will be used as authorization token if box has auth enabled (e.g. useAuth: true)
  */
 const postNewMeasurementTingg = async function postNewMeasurementTingg (req, res, next) {
+  console.log("hello")
   const { topic,payload } = req._userParams;
   const { boxId, sensorId, value, createdAt, location } = decodeTinggMessage(topic,payload);
-  console.log("new tingg measurement inc");
-  console.log(req)
-  console.log(topic,payload);
   try {
     const box = await Box.findBoxById(boxId, { populate: false, lean: false });
     if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
