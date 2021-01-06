@@ -123,7 +123,7 @@ const routes = {
     { path: `${managementPath}/users/:userId/exec`, method: 'post', handler: managementController.execUserAction, reference: 'api-Admin-execUserAction' },
 
   ],
-  
+   
 };
 
 const initRoutes = function initRoutes (server) {
