@@ -162,7 +162,6 @@ const linkModem = async function linkModem(imsi, thing_id) {
         headers: { "Authorization": "Bearer " + access_token,"Content-Type": "application/json" }
     })
     if (!response.ok) {
-        console.log(response)
         if (response.status === 401) {
             throw new Error('401')
         }
@@ -203,7 +202,6 @@ const updateThingType = async function updateThingType(box) {
  * @param {5378459734895} imsi 
  */
 const deactivateModem = async function deactivateModem(imsi) {
-    console.log(imsi);
     let response = await fetch(app.TINGG_URL + '/modems/' + imsi + '/link', {
         method: 'DELETE',
         headers: { "Authorization": "Bearer " + access_token }

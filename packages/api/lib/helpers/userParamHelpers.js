@@ -532,12 +532,10 @@ const decodeTinggMessage = function decodeTinggMessage(topic,payload){
   const topicArray = topic.split("/");
   const boxId = topicArray[2];
   const sensorId = topicArray[3];
-  const value = payload.value;
-  const createdAt = payload.createdAt;
-  const location = payload.location;
-  console.log("decoded tingg");
-  console.log(boxId,sensorId);
-  console.log(value);
+  const payloadObject = JSON.parse(payload);
+  const value = payloadObject.value;
+  const createdAt = payloadObject.createdAt;
+  const location = payloadObject.location;
   return {boxId, sensorId, value, createdAt, location}
 }
 

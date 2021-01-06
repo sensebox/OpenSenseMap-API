@@ -224,7 +224,6 @@ const getDataMulti = async function getDataMulti (req, res, next) {
  */
 const postNewMeasurement = async function postNewMeasurement (req, res, next) {
   const { boxId, sensorId, value, createdAt, location } = req._userParams;
-  console.log(location,createdAt)
   try {
     const box = await Box.findBoxById(boxId, { populate: false, lean: false });
     if (box.useAuth && box.access_token && box.access_token !== req.headers.authorization) {
@@ -324,7 +323,6 @@ const postNewMeasurement = async function postNewMeasurement (req, res, next) {
  * }
  */
 const postNewMeasurements = async function postNewMeasurements (req, res, next) {
-  console.log("Normal Measurement")
   const { boxId, luftdaten, hackair } = req._userParams;
   let contentType = req.getContentType();
 
@@ -370,7 +368,6 @@ const postNewMeasurements = async function postNewMeasurements (req, res, next) 
  * @apiHeader {String} access_token Box' unique access_token. Will be used as authorization token if box has auth enabled (e.g. useAuth: true)
  */
 const postNewMeasurementTingg = async function postNewMeasurementTingg (req, res, next) {
-  console.log("hello")
   const { topic,payload } = req._userParams;
   const { boxId, sensorId, value, createdAt, location } = decodeTinggMessage(topic,payload);
   try {
@@ -454,7 +451,7 @@ module.exports = {
     checkContentType,
     retrieveParameters([
       { name: 'topic', required: true },
-      { name: 'payload',dataType: 'object' , required: true },
+      { name: 'payload' , required: true },
     ]),
     postNewMeasurementTingg
   ]};

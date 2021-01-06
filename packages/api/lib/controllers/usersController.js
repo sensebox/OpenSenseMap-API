@@ -317,7 +317,6 @@ const deleteModem = async function deleteModem(req,res,next){
 const verifyTinggModem = async function verifyTinggModem(req,res,next){
   try{
     const {imsi, secret_code } = req._userParams;
-    console.log(imsi,secret_code)
     let response = await wrapper(verifyModem,{'imsi':imsi,'secret_code':secret_code});
     let inUse = await wrapper(checkModemInUse,{'imsi':imsi})
     res.send(200,{code:'Ok',message:'IMSI and code verified, IMSI is not being used yet'})
