@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.0.32a
+- Added tests for homeV2GSM model
+## v0.0.32beta
+- Added homeV2GSM to database models
+- Added gsm information to the integrations object
+
 ## v0.0.31
 - Update @sensebox/node-sketch-templater to v1.10.5
 
